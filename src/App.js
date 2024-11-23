@@ -9,35 +9,29 @@ function App() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!userInput.trim()) return;
-
-    // Add user message to the chat
+  
     const newMessage = { role: "user", content: userInput };
     setMessages([...messages, newMessage]);
-
-    // Clear input field
+  
     setUserInput("");
     setIsLoading(true);
-
+  
     try {
-      // Make API call directly to OpenAI
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      const response = await fetch("https://backend-c1uq.onrender.com/api/query", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.REACT_APP_OPENAI_API_KEY}`, // Load key from .env
         },
-        body: JSON.stringify({
-          model: "gpt-4o-mini", // Replace with your model
-          messages: [
-            { role: "system", content: "You are a bot focused on business and investment ideas in Kenya." },
-            ...messages,
-            newMessage,
-          ],
-        }),
+        body: JSON.stringify({ message: userInput }),
       });
-
+  
       const data = await response.json();
-      const botMessage = { role: "assistant", content: data.choices[0].message.content };
+  
+      if (data.error) {
+        throw new Error(data.error);
+      }
+  
+      const botMessage = { role: "assistant", content: data.response };
       setMessages((prevMessages) => [...prevMessages, botMessage]);
     } catch (error) {
       console.error("Error:", error);
@@ -49,6 +43,8 @@ function App() {
       setIsLoading(false);
     }
   };
+  
+
 
   return (
     <div className="App">
