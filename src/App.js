@@ -1,17 +1,38 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { v4 as uuidv4 } from "uuid";
 import "./App.css";
 
 function App() {
-  const [messages, setMessages] = useState([]);
+  const chatEndRef = useRef(null);
+
+  const [messages, setMessages] = useState(() => {
+    const saved = localStorage.getItem("chat_history");
+    return saved ? JSON.parse(saved) : [];
+  });
+
   const [userInput, setUserInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [sessionId, setSessionId] = useState(() => {
+    const saved = localStorage.getItem("session_id");
+    if (saved) return saved;
+    const newId = uuidv4();
+    localStorage.setItem("session_id", newId);
+    return newId;
+  });
+
+  // Scroll to bottom on message update
+  useEffect(() => {
+    localStorage.setItem("chat_history", JSON.stringify(messages));
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!userInput.trim()) return;
 
     const newMessage = { role: "user", content: userInput };
-    setMessages([...messages, newMessage]);
+    const updatedMessages = [...messages, newMessage];
+    setMessages(updatedMessages);
     setUserInput("");
     setIsLoading(true);
 
@@ -19,22 +40,44 @@ function App() {
       const response = await fetch("https://backend-c1uq.onrender.com/api/query", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userInput }),
+        body: JSON.stringify({
+          message: userInput,
+          session_id: sessionId,
+        }),
       });
 
       const data = await response.json();
-      const botMessage = { role: "assistant", content: data.response || "Sorry, I couldn't process your request." };
+      const botMessage = {
+        role: "assistant",
+        content: data.response || "Sorry, I couldn't process your request.",
+      };
       setMessages((prev) => [...prev, botMessage]);
     } catch (err) {
-      setMessages((prev) => [...prev, { role: "assistant", content: "Server error. Try again later." }]);
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: "Server error. Try again later." },
+      ]);
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleReset = () => {
+    const newId = uuidv4();
+    localStorage.setItem("session_id", newId);
+    localStorage.removeItem("chat_history");
+    setSessionId(newId);
+    setMessages([]);
+  };
+
   return (
     <div className="app-container">
-      <header className="app-header">💼 Kenya Business Assistant</header>
+      <header className="app-header">
+        💼 Kenya Business Assistant
+        <button className="reset-btn" onClick={handleReset}>
+          Reset Chat
+        </button>
+      </header>
 
       <div className="chat-window">
         {messages.map((msg, idx) => (
@@ -42,7 +85,10 @@ function App() {
             <span>{msg.content}</span>
           </div>
         ))}
-        {isLoading && <div className="chat-bubble assistant loading">Typing...</div>}
+        {isLoading && (
+          <div className="chat-bubble assistant loading">Typing...</div>
+        )}
+        <div ref={chatEndRef} />
       </div>
 
       <form className="input-area" onSubmit={handleSubmit}>
