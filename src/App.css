@@ -104,3 +104,16 @@ body {
 .input-area button:hover {
   background-color: #27ae60;
 }
+
+.connection-status {
+  padding: 6px;
+  font-size: 14px;
+  text-align: center;
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.connection-status.loading {
+  background-color: #fffde7;
+  color: #f9a825;
+}

@@ -40,6 +40,8 @@ function App() {
     setIsLoading(true);
 
     try {
+      console.log("🔁 Sending message to backend:", userInput);
+
       const response = await fetch("https://backend-c1uq.onrender.com/api/query", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -50,12 +52,15 @@ function App() {
       });
 
       const data = await response.json();
+      console.log("✅ Received response:", data);
+
       const botMessage = {
         role: "assistant",
         content: data.response || "Sorry, I couldn't process your request.",
       };
       setMessages((prev) => [...prev, botMessage]);
     } catch (err) {
+      console.error("❌ Server error:", err);
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: "Server error. Try again later." },
@@ -81,6 +86,10 @@ function App() {
           Reset Chat
         </button>
       </header>
+
+      <div className={`connection-status ${isLoading ? "loading" : ""}`}>
+        {isLoading ? "⏳ Talking to assistant..." : "✅ Ready"}
+      </div>
 
       <div className="chat-window">
         {messages.map((msg, idx) => (
