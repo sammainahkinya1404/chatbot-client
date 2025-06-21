@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
-import { v4 as uuidv4 } from "uuid";
 import "./App.css";
+
+function generateSessionId() {
+  return Date.now().toString(36) + Math.random().toString(36).substring(2);
+}
 
 function App() {
   const chatEndRef = useRef(null);
@@ -15,7 +18,7 @@ function App() {
   const [sessionId, setSessionId] = useState(() => {
     const saved = localStorage.getItem("session_id");
     if (saved) return saved;
-    const newId = uuidv4();
+    const newId = generateSessionId();
     localStorage.setItem("session_id", newId);
     return newId;
   });
@@ -63,7 +66,7 @@ function App() {
   };
 
   const handleReset = () => {
-    const newId = uuidv4();
+    const newId = generateSessionId();
     localStorage.setItem("session_id", newId);
     localStorage.removeItem("chat_history");
     setSessionId(newId);
